@@ -15,6 +15,7 @@ FHIR Path is used in 5 places within the FHIR specifications
 - invariants in ElementDefinition, used to apply co-occurance and other rules to the contents 
 - error message locations in OperationOutcome
 - URL templates in Smart on FHIR's cds-hooks
+- may be used for Patch in the future
 
 Implementations may find other uses for this as well
 
@@ -45,7 +46,8 @@ Paths and polymorphic items:
 	name* - recursive uses of the element 
 	$context - the original context (see below for usage)
 	$resource - the original container resource (e.g. skip contained resources, but do not go past a root resource into a bundle, if it is contained in a bundle)
-	$parent - the element that contains $contex
+	$parent - the element that contains $context
+        $focus - a reference to the current focus. This is useful where you need to refer to the focus in a function parameter (e.g. $focus in criteria)
 
 Note: $resource and $parent are only allowed in invariants
  
@@ -58,6 +60,8 @@ This can be evaluated as an expression on a Patient resource, or other kind of r
 	Patient.telecom.where(use = 'work').value
   
 These 2 expressions have the same outcome, but when evaluating the second, the evaluation will only produce results when used on a Patient resource.
+
+Order: collections are inherently ordered, and implementations must retain the original order of a collection. There are 2 special cases: the outcome of the special paths * and ** cannot be assumed to be in any meaningful order, and .first(), .last(), .tail(), .skip() and .take() should not be used on collections derived from these paths. Note that some implementations may follow the standard order, and some not, and some may be different if the underlying source is json or xml.
 
 3. FHIR Types
 -------------
@@ -98,6 +102,8 @@ Collections can be evaluated as booleans in logical tests in criteria. When a co
 Note that collections never contain null objects 
 
 This same principle applies when using the path statement in invariants.
+
+Note about short circuit evaluation: because the path language is side effect free, it does not matter whether implementations use short circuit boolean evaluation or not. However with regard to performance, implementations are encouraged to use short circuit evaluation, and authors of path statement should pay attention to short circuit evaluation when designing statements for optimal performance
 
 5. Functions
 -------------------------
@@ -272,6 +278,8 @@ The following fixed values are set for all contexts:
 Implementers should note that defining additional fixed constants is a formal extension point for the langauge. Implementation Guides are allowed to define their own fixed constants, and implementers should provide some appropriate configuration framework to allow these constants to be provided to the evaluation engine at run time.
 
 	e.g. %us-zip = "[0-9]{5}(-[0-9]{4}){0,1}"
+
+Note that these tokens are not restricted to simple types, and they may not have defined fixed values that are known before evaluation at run-time, though there is no way to define these kind of values in implementation guides.
 
 8. Formal grammar
 -----------------------------------
