@@ -9,29 +9,29 @@ grammar fhirpath;
 //op: LOGIC | COMP | '*' | '/' | '+' | '-' | '|' | '&';
 
 prog: line (line)*;
-
 line: ID ( '(' predicate ')') ':' expr '\r'? '\n';
 
-//prog: expression (';' expression)* ';'?;
+expr:
+        expr ('*' | '/') expr |
+        expr ('+' | '-') expr |
+        expr ('|' | '&') expr |
+        expr COMP expr |
+        expr LOGIC expr |
+        '(' expr ')' |
+        predicate |
+        fpconst;
 
-expr_no_binop: '(' expr ')' | predicate | fpconst;
-expr: binop | expr_no_binop;
+predicate : (root_spec | item) ('.' item)* ;
 
-binop_operator: ( LOGIC | COMP | BOOL ) ;
-binop: expr_no_binop binop_operator expr_no_binop ;
-
-predicate : ('$context' | '$resource' | '$parent' | item) ('.' item)* ;
 item: element recurse? | function | axis_spec | '(' expr ')';
 element: ID CHOICE?;
 recurse: '*';
+
 axis_spec: '*' | '**' ;
+root_spec: '$context' | '$resource' | '$parent';
 
 function: ID '(' param_list? ')';
 param_list: expr (',' expr)*;
-
-//array_expr:
-//    expr |
-//    expr '..' expr;
 
 fpconst: STRING |
        '-'? NUMBER |
@@ -69,3 +69,5 @@ fragment ALPHA: [a-zA-Z];
 fragment ALPHANUM: ALPHA | [0-9];
 
 WS: [ \r\n\t]+ -> skip;
+
+COMMENT: '{' (~'}')* '}' -> skip;
